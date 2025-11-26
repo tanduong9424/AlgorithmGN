@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 
 # 1) đọc file input chuyển thành đồ thị
 G = nx.Graph()
-with open("./ego-facebook.edges", "r") as f: # đọc karate club 
-#with open("./ego-twitter.edges", "r") as f: # đọc karate club 
+#with open("./ego-facebook.edges", "r") as f: # đọc facebook
+with open("./USpowerGrid.mtx", "r") as f: # đọc twitter
 #with open("./karate.mtx", "r") as f: # đọc karate club 
 #with open("./dolphins.mtx", "r") as f: # đọc dolphins network
     for line in f:
@@ -18,7 +18,7 @@ with open("./ego-facebook.edges", "r") as f: # đọc karate club
             continue
         line_clean = line.replace(',', ' ') # nếu trường hợp các đỉnh ngăn cách bởi dấu phẩy
         parts = line_clean.split()
-        if len(parts) < 2:
+        if len(parts) != 2 :
             continue
         try:
             u = int(parts[0])
@@ -46,7 +46,7 @@ for communities in comp_gen:
     mods.append(m) # thêm giá trị m vào mảng mods
 
     print(f"\nBước{step}---------------------------------")
-    print("Partition:", partition)
+    #print("Partition:", partition)
     print("Số cộng đồng :", len(partition))
     print("Modularity:", m)
 
@@ -97,5 +97,4 @@ plt.title(f"Modularity≈{modularity_print}")
 plt.axis('off')
 plt.tight_layout()
 plt.show()
-
 '''
