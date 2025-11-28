@@ -4,19 +4,17 @@ from networkx.algorithms.community.quality import modularity
 import time
 import matplotlib.pyplot as plt
 
-# 1) đọc file input chuyển thành đồ thị
+#1) đọc file input chuyển thành đồ thị
 G = nx.Graph()
-#with open("./ego-facebook.edges", "r") as f: # đọc facebook
-with open("./USpowerGrid.mtx", "r") as f: # đọc twitter
-#with open("./karate.mtx", "r") as f: # đọc karate club 
-#with open("./dolphins.mtx", "r") as f: # đọc dolphins network
+#with open("./karate.mtx", "r") as f: #đọc karate club 
+with open("./dolphins.mtx", "r") as f: #đọc dolphins network
     for line in f:
         line = line.strip()
         if not line:
             continue
         if line.startswith("%"):
             continue
-        line_clean = line.replace(',', ' ') # nếu trường hợp các đỉnh ngăn cách bởi dấu phẩy
+        line_clean = line.replace(',', ' ') #nếu trường hợp các đỉnh ngăn cách bởi dấu phẩy và space
         parts = line_clean.split()
         if len(parts) != 2 :
             continue
@@ -26,26 +24,24 @@ with open("./USpowerGrid.mtx", "r") as f: # đọc twitter
         except ValueError:
             continue
         G.add_edge(u, v)
-
 print("Số đỉnh:", G.number_of_nodes())
 print("Số cạnh:", G.number_of_edges())
 
 
-# 2) chạy Girvan-Newman và tính modularity
+#2) chạy Girvan-Newman và tính modularity
 comp_gen = girvan_newman(G)
-
 best_mod = -1
 best_partition = None
 step = 0
 mods = [] #mảng lưu modularity để vẽ biểu đồ modularity theo từng bước
-start_total = time.perf_counter() # bắt đầu tính thời gian chạy Girvan-Newman
+start_total = time.perf_counter() #bắt đầu tính thời gian chạy Girvan-Newman
 for communities in comp_gen:
     step += 1
     partition = [list(c) for c in communities]
-    m = modularity(G, communities) # tính modularity
-    mods.append(m) # thêm giá trị m vào mảng mods
+    m = modularity(G, communities) #tính modularity
+    mods.append(m) #thêm giá trị m vào mảng mods
 
-    print(f"\nBước{step}---------------------------------")
+    print(f"\nBước {step}")
     #print("Partition:", partition)
     print("Số cộng đồng :", len(partition))
     print("Modularity:", m)
@@ -53,31 +49,39 @@ for communities in comp_gen:
     if m > best_mod:
         best_mod = m
         best_partition = partition
-    else:
-        break
 
-end_total = time.perf_counter()   # kết thúc tính thời gian chạy GN
+    if len(partition) >= G.number_of_nodes():
+        break #điều kiện dừng khi bỏ hết tất cả cạnh, mỗi đỉnh trở thành 1 cộng đồng
+
+end_total = time.perf_counter() # kết thúc tính thời gian chạy 
 total_time = end_total - start_total
 
-# 3) Kết quả cuối cùng
-
-print("\n-----------------------------")
-print("KẾT QUẢ CUỐI CÙNG:")
+#3) Kết quả
+print("\n---------------------------------------------\n")
+print("Kết quả tốt nhất:")
 print("Phát hiện được ", len(best_partition), "cộng đồng.")
-#print(len(best_partition)," phân vùng tốt nhất:", best_partition)
+print(len(best_partition)," phân vùng tốt nhất gồm :", best_partition)
 print("Modularity đạt cực đại với giá trị:", best_mod)
 print(f"Tổng thời gian chạy thuật toán: {total_time:.6f} giây")
 
 
-'''
 # VẼ ĐỒ THỊ MODULARITY
 plt.figure(figsize=(6, 4))
-plt.plot(range(1, len(mods) + 1), mods, marker='o')
+x = list(range(1, len(mods) + 1))
+plt.plot(x, mods, marker='o')
+max_idx = mods.index(max(mods)) + 1  # +1 vì x bắt đầu từ 1
+plt.axvline(x=max_idx, color='yellow', linestyle='solid', label=f'Max Modularity at step {max_idx}')
 plt.xlabel('Bước')
 plt.ylabel('Modularity')
-plt.title('Modularity theo từng bước Girvan-Newman')
+plt.title('Giá trị modularity theo từng bước tính toán Girvan-Newman')
 plt.grid(True)
 plt.tight_layout()
+
+if len(x) <= 50:
+    plt.xticks(x)
+else:
+    step = max(1, len(x) // 50)
+    plt.xticks(range(1, len(x) + 1, step))
 plt.show()
 
 # VẼ LẠI CỘNG ĐỒNG KHI MODULARITY ĐẠT CỰC ĐẠI
@@ -97,4 +101,3 @@ plt.title(f"Modularity≈{modularity_print}")
 plt.axis('off')
 plt.tight_layout()
 plt.show()
-'''
