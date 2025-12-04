@@ -5,8 +5,7 @@ import time
 import matplotlib.pyplot as plt
 
 #1) đọc file input chuyển thành đồ thị
-G = nx.Graph() 
-
+G = nx.Graph()
 with open("./karate.mtx", "r") as f: #đọc karate club 
 #with open("./dolphins.mtx", "r") as f: #đọc dolphins network
     for line in f:
@@ -36,6 +35,7 @@ best_partition = None
 step = 0
 mods = [] #mảng lưu modularity để vẽ biểu đồ modularity theo từng bước
 start_total = time.perf_counter() #bắt đầu tính thời gian chạy Girvan-Newman
+prev_mod = None
 for communities in comp_gen:
     step += 1
     partition = [list(c) for c in communities]
@@ -46,7 +46,11 @@ for communities in comp_gen:
     #print("Partition:", partition)
     print("Số cộng đồng :", len(partition))
     print("Modularity:", m)
-
+    # Nếu modularity giảm so với lần lặp trước thì dừng
+    if prev_mod is not None and m < prev_mod:
+        print(f"Modularity giảm từ {prev_mod} xuống {m} ở bước {step}. Dừng thuật toán.")
+        break
+    prev_mod = m
     if m > best_mod:
         best_mod = m
         best_partition = partition
@@ -87,14 +91,20 @@ plt.show()
 
 # VẼ LẠI CỘNG ĐỒNG KHI MODULARITY ĐẠT CỰC ĐẠI
 pos = nx.spring_layout(G, seed=42)
-cmap = plt.get_cmap('tab20')
 node_color_map = {}
+# Use two colors only: green and red. Communities alternate between them.
+color_a = (1.0, 1.0, 1.0)  # green
+color_b = (1.0, 0.0, 0.0)  # red
+fallback_color = (0.6, 0.6, 0.6)
 for i, community in enumerate(best_partition):
+    use_color = color_a if (i % 2) == 0 else color_b
     for node in community:
-        node_color_map[node] = cmap(i % 20)
-node_colors = [node_color_map.get(node, (0.6, 0.6, 0.6)) for node in G.nodes()]
+        node_color_map[node] = use_color
+
+node_colors = [node_color_map.get(node, fallback_color) for node in G.nodes()]
 plt.figure(figsize=(8, 6))
-nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=150)
+# draw nodes with a contrasting black border for readability
+nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=150, edgecolors='k')
 nx.draw_networkx_edges(G, pos, alpha=0.5)
 nx.draw_networkx_labels(G, pos, font_size=8)
 modularity_print = int(best_mod * 1000) / 1000 # lấy 3 số sau dấu phẩy, ko làm tròn
